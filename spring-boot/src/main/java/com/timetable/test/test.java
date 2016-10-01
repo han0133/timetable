@@ -1,5 +1,8 @@
 package com.timetable.test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,11 +20,16 @@ public class test {
 	@RequestMapping("/test")
 	public String testMethod(Model model){
 		
-		for(Subject subject : this.repository.findAll()){
-			System.out.println(subject);
-			//model.addAttribute("", );
+		//과목 list를 담을 list 생성
+		List<Subject> subject = new ArrayList<Subject>();
+		
+		//repository에서 가져온 값을 순서대로 subject에 담는다
+		for(Subject subjectTemp : this.repository.findAll()){
+			System.out.println(subjectTemp);
+			subject.add(subjectTemp);
 		}
 		
-		return "test/test.html";
+		model.addAttribute("subject", subject);
+		return "/testVelocity";
 	}
 }
