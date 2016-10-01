@@ -6,8 +6,8 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface SubjectRepository extends MongoRepository<Subject, String>{
 
-	Subject findByCode(String code);
+	SubjectDomain findByCode(String code);
 	
-	List<Subject> findByName(String name);
+	List<SubjectDomain> findByName(String name);
 	
 }

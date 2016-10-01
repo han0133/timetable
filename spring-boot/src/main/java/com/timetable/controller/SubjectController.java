@@ -1,4 +1,4 @@
-package com.timetable.test;
+package com.timetable.controller;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,12 +12,12 @@ import com.timetable.config.document.Subject;
 import com.timetable.config.document.SubjectRepository;
 
 @Controller
-public class test {
+public class SubjectController {
 	
 	@Autowired
 	private SubjectRepository repository;
 
-	@RequestMapping("/test")
+	@RequestMapping("/timetable")
 	public String testMethod(Model model){
 		
 		//과목 list를 담을 list 생성
