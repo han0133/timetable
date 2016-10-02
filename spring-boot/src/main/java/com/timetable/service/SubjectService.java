@@ -14,12 +14,11 @@ public class SubjectService {
 	@Autowired
 	private SubjectRepository repository;
 	
-	public List<Subject> getByCode(String code){
+	public List<Subject> findListByCode(String code){
 		return repository.findByCode(code);
 	}
 	
 	public List<Subject> getAll(){
 		return repository.findAll();
 	}
-			
 }
