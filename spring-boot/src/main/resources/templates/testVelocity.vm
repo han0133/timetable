@@ -179,24 +179,28 @@
 				<thead>
 					<tr>
 						<th>과목명</th>
+						<th>주당수업횟수</th>
 						<th>학점</th>
 						<th>분반</th>
 						<th>강의실</th>
 						<th>담당교수</th>
 						<th>시간</th>
 						<th>이수구분</th>
+						<th>상세구분</th>
 					</tr>
 				</thead>
-				<tbody>
-					#foreach( $subject in $subject )
+				<tbody>s
+					#foreach($test in $subject)
 					<tr>	
-						<td>$subject.getName()</td>
-						<td>$subject.getCredit()</td>
-						<td>$subject.getClasses()</td>
-						<td>$subject.getLectureRoom()</td>
-						<td>$subject.getProfessor()</td>
-						<td>$subject.getTime()</td>
-						<td>$subject.getType()</td>
+						<td>$test.getName()</td>
+						<!-- <td>$test.getNoPerWeek()</td>
+						<td>$test.getCredit()</td>
+						<td>$test.getGroup()</td>
+						<td>$test.getClassroom()</td>
+						<td>$test.getProfessor()</td>
+						<td>$test.getTime()</td>
+						<td>$test.getType()</td>
+						<td>$test.getTypeDetail()</td> -->
 					</tr>
 					#end
 				</tbody>
