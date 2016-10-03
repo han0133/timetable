@@ -1,312 +1,500 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script> 
+<meta charset="UTF-8" />
 <style>
-	.hour, .grid, .time{
-		height: 25px;
-		top: 450px;
-		line-height: 50px;
-		table{
-		  border: 1px solid black;
-		}
+	table{
+
+	}
+	.lectureList{
+			width:1000px;
+	}
+		
+	td, th{
+		text-align:center;
+	}
+		
 	body{
-		margin-left: 10%;
-		}
+		margin-left: 2%;
+	}
+		
+	#searchBtn{
+	   size:50px;
+	   float:left;
+	}
+	
+	#inputSuccess{
+	   size:50px;
+	}
+	
+	.time{
+		width:100px;
+	}
+	
+	.hour{
+		width:100px;
 	}
 </style>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
-<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.js"></script>
-<meta charset="UTF-8" />
-<title>Insert title here</title>
+<title>시간표 자동 생성 웹서비스</title>
 </head>
 <script>
-
-	$( document ).ready(function(){
+	//추가한 강의 목록을 담는 변수를 선언합니다
+	var myTimetable = new Array();	//강의코드로 구분
+	var myTimetableId = new Array(); //강의id로 구분
 	
-	    $('td.nameClass').on('click',function(){
-	    	console.log('클릭');
+	//선택한 과목의 총 학점을 담을 변수를 선언합니다
+	var total = 0;
+	
+	//강의를 추가하는 함수입니다
+	function addSubject(result){
+	//	console.log('addSubject함수실행');
+		//해당 과목의 학점을 변수에 담습니다
+        var credit = result.credit;
+        //해당 과목의 학점을 총 학점에 더합니다
+        total += credit;
+      //  console.log('총 학점: '+total);
+        //최대학점 초과 여부를 확인합니다
+    	if(total > 21){
+    		alert('최대 학점을 초과하였습니다');
+    		total -= credit;
+    		//추가한 강의 목록 배열에서 제거합니다
+ 			var deletevar = myTimetable.pop();
+ 			var deletevar = myTimetableId.pop();
+ 			console.log('삭제한 것: '+deletevar);
+ 			return;
+    	}
+        
+		//선택한 강의을 시간표에 출력
+	 	for(var i = 0; i<result.time.length; i++){
+	 	//	console.log(result.time[i]);
+	 		
+	 		//같은 시간에 선택한 강의가 있으면 강의 추가 불가
+	 		if($('#'+result.time[i]).html() != ""){
+	 			alert('이미 같은 시간에 선택한 강의가 있습니다');
+	 			total -= credit;
+	 			//추가한 강의 목록 배열에서 제거합니다
+	 			var deletevar = myTimetable.pop();
+	 			var deletevar = myTimetableId.pop();
+	 			console.log('삭제한 것: '+deletevar);
+	 			break;
+	 			
+	 		}else{
+	 			//강의를 추가합니다
+    	 		$('#'+result.time[i]).html(result.name+'('+result.professor+')<br>'+result.classroom
+    	 				+'<div class="codeClassTable" style="display: none;">'+result.code+'</div>');
+	 		}
+		} 
+		
+	 	$('#credit').html(total);
+	 	
+	 	//선택한 강의 목록을 출력합니다
+	 	$('#selectedSubjects').html('');
+	 	 for(var i=0; i<myTimetableId.length; i++){
+	 		//선택리스트에 추가합니다
+	 		findByIdAjax(myTimetableId[i], addToList);
+	 	 }
+	}
+
+	//id로 과목 정보를 불러오는 ajax요청을 실행한 후, 함수를 실행합니다
+	function findByIdAjax(subjectId, Fn) {
+	//	console.log('findByIdAjax함수실행');
+		$.ajax({
+		     url:'/findSubjectById'
+		     ,type: 'POST'
+		     ,dataType:'json'
+		     ,data: { id : subjectId}
+		     ,success:function(data){
+		    	 Fn(data[0]);
+		     }
+		});
+	}
+	
+	function add(data){
+	//	console.log('add함수 실행');
+	    //과목을 추가하는 함수를 실행합니다
+	    addSubject(data);
+	} 
+	
+	//강의아이디로 데이터를 불러와서 선택리스트에 추가합니다
+	function addToList(result) {
+	//	console.log('addToList함수 실행');
+	//	var result = data;
+		$('#selectedSubjects').append(result.name+'(<span class="subId">'+result.id+'</span>)<div class="deleteSub">(삭제하기)</div>');
+	} 
+	
+	//강의 코드로 데이터를 불러와서 선택한 강의를 삭제합니다
+	function deleteFn(result) {
+	//	console.log('deleteFn함수 실행');
+        
+        for(var i=0; i<result.time.length; i++){
+        	//시간표에서 삭제합니다
+        	$('#'+result.time[i]).html('');
+        }
+        
+	    //선택강의 목록에서 삭제합니다
+		myTimetable.splice(myTimetable.indexOf(result.code),1);
+		myTimetableId.splice(myTimetableId.indexOf(result.id),1);
+		//학점을 차감합니다
+		total -= result.credit;
+		$('#credit').html(total);
+		
+		//선택한 강의 목록을 출력합니다
+	 	$('#selectedSubjects').html('');
+	 	 for(var i=0; i<myTimetableId.length; i++){
+	 		//선택리스트에 추가합니다
+	 		findByIdAjax(myTimetableId[i], addToList)
+	 	 }
+	} 
+	
+	$(document).ready(function(){
+		
+		//강의 클릭시 선택한 강의를 추가합니다
+		$(document).on('click','td.nameClass',function(){
+	    //	console.log('강의클릭');
 	    	
 	    	//클릭한 요소의 아이디를 변수에 저장합니다
 	    	var clicked_name = $(this).attr('id');
-	    	//클릭한 과목의 과목코드를 변수에 저장합니다
+	    	//클릭한 과목의 과목ID를 변수에 저장합니다
 	    	var subjectCode = $('#'+clicked_name).children('.codeClass').html();
+	    	var subjectId = $('#'+clicked_name).children('.idClass').html();
 	    	
-	    	 $.ajax({
-	             url:'/addSubject'
-	             ,type: 'POST'
-	             ,dataType:'json'
-	             ,data: { code : subjectCode}
-	             ,success:function(result){
-	                console.log('성공');
-	            	var result = result[0];
-	            	
-	            		//1~2학점은  주 2시간의 수업을 진행. 3학점은 주2시간x2회 총4시간 수업 진행
-	            	 	for(var i = 0; i<result.time.length; i++){
-	            	 		console.log('for문실행');
-	            	 		console.log(result.time[i]);
-	            	 		$('#'+result.time[i]).html(result.name+'('+result.professor+')<br>'+result.classroom);
-	            		} 
-	             }
-	         })
+	    	//중복 강의는 추가 불가. 추가한 강의를 배열변수에 담습니다
+	    	if(myTimetable.length == 0){
+	    		myTimetable.push(subjectCode);
+	    		myTimetableId.push(subjectId);
+	    		
+	    		findByIdAjax(subjectId, add);
+	    		
+	    	}else{
+	    		for(var i=0; i<myTimetable.length; i++){
+	    			var success = true;
+	    			console.log('for문 실행');
+					console.log('myTimetable'+i+': '+myTimetable[i]);	    
+					console.log('subjectCode: '+subjectCode);
+	    			if(myTimetable[i] == subjectCode){
+	    				alert('이미 추가한 과목입니다');
+	    				success = false;
+	    				break;
+		    		}
+	    			console.log('for문 실행끝');
+	    			console.log('success: '+success);
+		    	}
+	    		console.log('for문 빠져나옴');
+	    		if(success){
+	    			console.log('success');
+	    			myTimetable.push(subjectCode);
+	    			myTimetableId.push(subjectId);
+	    			findByIdAjax(subjectId, add);
+	    		}
+	    	}
+	    });
+	    
+	    //추가된 강의를 삭제합니다
+	    $(document).on('click','.deleteSub',function(){
+	    	console.log('삭제클릭');
+	    	//삭제하고자 하는 강의Id를 변수에 담습니다
+	    	var id = $(this).prev('.subId').html();
+	    	console.log('id: '+id);
+			//선택한 강의를 삭제하는 함수를 실행합니다
+	    	findByIdAjax(id, deleteFn);
+	    });
+	    
+	    //수강신청 버튼을 누르면 작동합니다
+	    $('#submitBtn').click(function(){
+	    	console.log('클릭');
+	    	console.log('credit: '+total);
+	    	if(total < 18){
+	    		alert('최소 학점은 18학점입니다. (현재 학점:'+total+')');
+	    	}else{
+	    		alert('저장이 완료되었습니다 (실제 저장은 아직 구현하지 않았습니다)');
+	    	}
 	    });
 	});
 </script>
 <body>
 	<!-- 시간표 -->
 	<div class="tablehead" style="width: 538px;">
-		tablehead 부분
+	    <h1>시간표 자동 생성 프로그램<small>(by안소영)</small></h1> 
 	</div>
-	<div class="tablebody table-responsive"> 
-		<table class="tablebody table table-bordered">
-			<tbody>
+	
+	<div class="row" style="width:80%;"> 
+		<div>
+			<table class="tablebody table table-bordered">
 				<tr class="table-warning">
-					<td class="hour table-warning">교시/요일</td>
-					<td class="grid">월요일</td>
-					<td class="grid">화요일</td>
-					<td class="grid">수요일</td>
-					<td class="grid">목요일</td>
-					<td class="grid">금요일</td>
-					<td class="time">시간</td>
+					<td class="hour table-warning success">교시/요일</td>
+					<td class="grid success">월요일</td>
+					<td class="grid success">화요일</td>
+					<td class="grid success">수요일</td>
+					<td class="grid success">목요일</td>
+					<td class="grid success">금요일</td>
+					<td class="time success">시간</td>
 				</tr>
 				
 				<tr>
-				  <td class="hour">1교시</td>
-					<td class="grid" id="M1">a</td>
-					<td class="grid" id="T1">b</td>
-					<td class="grid" id="W1">c</td>
-					<td class="grid" id="TH1">d</td>
-					<td class="grid" id="F1">e</td>
+				  <td class="hour success">1교시</td>
+					<td class="grid " id="M1"></td>
+					<td class="grid " id="T1"></td>
+					<td class="grid " id="W1"></td>
+					<td class="grid " id="TH1"></td>
+					<td class="grid " id="F1"></td>
 					<td class="time">오전9시</td>
 				</tr>	
 				
 				<tr>
-					<td class="hour">2교시</td>
-					<td class="grid" id="M2"></td>
-					<td class="grid" id="T2"></td>
-					<td class="grid" id="W2"></td>
-					<td class="grid" id="TH2"></td>
-					<td class="grid" id="F2"></td>
+					<td class="hour success">2교시</td>
+					<td class="grid " id="M2"></td>
+					<td class="grid " id="T2"></td>
+					<td class="grid " id="W2"></td>
+					<td class="grid " id="TH2"></td>
+					<td class="grid " id="F2"></td>
          			<td class="time">오전10시</td>
 				</tr>
 				
 				<tr>
-					<td class="hour">3교시</td>
-					<td class="grid" id="M3"></td>
-					<td class="grid" id="T3"></td>
-					<td class="grid" id="W3"></td>
-					<td class="grid" id="TH3"></td>
-					<td class="grid" id="F3"></td>
+					<td class="hour success">3교시</td>
+					<td class="grid " id="M3"></td>
+					<td class="grid " id="T3"></td>
+					<td class="grid " id="W3"></td>
+					<td class="grid " id="TH3"></td>
+					<td class="grid " id="F3"></td>
 					<td class="time">오전11시</td>
 				</tr>	
 				
 				<tr>
-					<td class="hour">4교시</td>
-					<td class="grid danger" id="M4"></td>
-					<td class="grid" id="T4"></td>
-					<td class="grid" id="W4"></td>
-					<td class="grid" id="TH4"></td>
-					<td class="grid" id="F4"></td>
+					<td class="hour success">4교시</td>
+					<td class="grid " id="M4"></td>
+					<td class="grid " id="T4"></td>
+					<td class="grid " id="W4"></td>
+					<td class="grid " id="TH4"></td>
+					<td class="grid " id="F4"></td>
 					<td class="time">오후12시</td>
 				</tr>
 				
 				<tr>
-					<td class="hour">5교시</td>
-					<td class="grid" id="M5"></td>
-					<td class="grid" id="T5"></td>
-					<td class="grid" id="W5"></td>
-					<td class="grid" id="TH5"></td>
-					<td class="grid" id="F5"></td>
+					<td class="hour success">5교시</td>
+					<td class="grid " id="M5"></td>
+					<td class="grid " id="T5"></td>
+					<td class="grid " id="W5"></td>
+					<td class="grid " id="TH5"></td>
+					<td class="grid " id="F5"></td>
 					<td class="time">오후1시</td>
-
 				</tr>	
-					
 				<tr>
-				  <td class="hour">6교시</td>
-					<td class="grid" id="M6"></td>
-					<td class="grid" id="T6"></td>
-					<td class="grid" id="W6"></td>
-					<td class="grid" id="TH6"></td>
-					<td class="grid" id="F6"></td>
+				  <td class="hour success">6교시</td>
+					<td class="grid " id="M6"></td>
+					<td class="grid " id="T6"></td>
+					<td class="grid " id="W6"></td>
+					<td class="grid " id="TH6"></td>
+					<td class="grid " id="F6"></td>
 					<td class="time">오후2시</td>
-        </tr>
-			  
-			  <tr>
-			    <td class="hour">7교시</td>
-  				<td class="grid" id="M7"></td>
-  				<td class="grid" id="T7"></td>
-  				<td class="grid" id="W7"></td>
-  				<td class="grid" id="TH7"></td>
-  				<td class="grid" id="F7"></td>
-  				<td class="time">오후3시</td>
-				</tr>	
-				
-				 <tr>
-			    <td class="hour">8교시</td>
-  				<td class="grid" id="M8"></td>
-  				<td class="grid" id="T8"></td>
-  				<td class="grid" id="W8"></td>
-  				<td class="grid" id="TH8"></td>
-  				<td class="grid" id="F8"></td>
-  				<td class="time">오후4시</td>
 				</tr>
-			</tbody>
-		</table>
+				<tr>
+					<td class="hour success">7교시</td>
+					<td class="grid " id="M7"></td>
+					<td class="grid " id="T7"></td>
+					<td class="grid " id="W7"></td>
+					<td class="grid " id="TH7"></td>
+					<td class="grid " id="F7"></td>
+					<td class="time">오후3시</td>
+				</tr>	
+				<tr>
+				    <td class="hour success">8교시</td>
+	  				<td class="grid " id="M8"></td>
+	  				<td class="grid " id="T8"></td>
+	  				<td class="grid " id="W8"></td>
+	  				<td class="grid " id="TH8"></td>
+	  				<td class="grid " id="F8"></td>
+	  				<td class="time">오후4시</td>
+				</tr>
+			</table>
+		</div>
+	
+		<div class="panel panel-default col-xs-6 col-md-4" style="width:800px; margin-left:1%; border:2px solid #FF5E00;">
+		    <div class="panel-body" style="padding:10px;">
+	  	      	선택한 학점: <div id="credit"></div>
+		    </div>
+	    	<div class="panel-body" style="padding:10px;">
+	        	선택한 강의 목록: <div id="selectedSubjects"></div>
+	    	</div>
+		</div>
 	</div>
+	<input type="button" class="btn btn-default" id="submitBtn" value="시간표 저장" margin-bottom:5px;"/>
 	
 	<!-- 개설강좌 검색 -->
+	학과로 검색:
 	<div class="subjects" style="display: block;">
-		<form class="search">
-			<h2>분류에 따른 수업검색</h2>
-			<ol class="selectType" style="width: 100%; height: 220px;">
-				<li>공통교양</li>
-				<li>선택교양</li>
-				<li>전공공통</li>
-				<li>전공필수</li>
-				<li>전공선택</li>
-				<li>자유선택</li>
-			</ol>
-			<ol class="selectDep" style="width: 0%; height: 220px;"></ol>
-			<div class="keyword">
-				<ul class="key">
-					<li class="active">과목명</li>
-					<li>담당교수</li>
-				</ul>
-				<input type="text" name="keyword" placeholder="검색어로 수업검색">
-				<input type="submit" class="option" value="검색">
-			</div>
-		</form>
-		
+			<div class="dropdown">
+				<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
+		         	 선택
+					<span class="caret"></span>
+				</button>
+				<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" id="select">
+					<li role="presentation"><a role="menuitem" tabindex="-1" href="#">공과대학</a></li>
+					<li role="presentation"><a role="menuitem" tabindex="-1" href="#">자연과학대학</a></li>
+					<li role="presentation"><a role="menuitem" tabindex="-1" href="#">인문사회과학대학</a></li>
+					<li role="presentation"><a role="menuitem" tabindex="-1" href="#">경영대학</a></li>
+					<li role="presentation"><a role="menuitem" tabindex="-1" href="#">환경·해양대학</a></li>
+					<li role="presentation"><a role="menuitem" tabindex="-1" href="#">수산과학대학</a></li>
+					<li role="presentation"><a role="menuitem" tabindex="-1" href="#">경영대학</a></li>
+					<li role="presentation"><a role="menuitem" tabindex="-1" href="#">교양과목</a></li>
+				</ul>    
+	        </div>
+	</div>		
+	<div class="dropdown">
+		<button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown" id="dropdownMenu2">전공선택
+		<span class="caret"></span></button>
+		<ul class="dropdown-menu" id="major">
+			<li><a href="#"></a></li>
+		</ul>
+	</div>
+	
+	강의명으로 검색:					
+	<div class="input-group">
+		<input type="text" class="form-control keyword" name="keyword" placeholder="검색어로 수업검색" id="inputSuccess" style="width:350px;">
+		<input type="button" id="searchBtn" class="btn btn-default" value="검색" >
+	</div>
+		<script>
+        $(document).ready(function(){
+        	
+        	//검색 분류를 담을 변수를 선언합니다
+			var selectedMajor = "";
+        	
+            //학부선택에 따라 전공 목록을 불러옵니다
+            $('#select li').click(function(){
+           		$('#major').empty();
+           		$('#dropdownMenu2').show();
+           		
+        		var selectedCollege= $(this).text();
+        		$('#dropdownMenu1').html(selectedCollege);
+        		
+        		if(selectedCollege == '교양과목'){
+        			console.log('교양선택');
+        			$('#dropdownMenu2').hide();
+        		}else{
+        			$.ajax({
+    	             	url : "/searchDepartments",
+    	                dataType : "json",
+    	                type : "post",
+    	                data : {selectedCollege : selectedCollege},
+    	                success: function(data) {
+    	                   console.log(data.departments);
+    	   
+    	                   for(var i=0; i<data.departments.length; i++){
+    	                  //  console.log("학과/학부 :"+data.departments[i]);
+    	                  	  $('<li><a href="#">'+data.departments[i]+'</a></li>').appendTo('#major');
+    					   }
+    	                 },
+    	                error:function(){
+    	                    alert("error");
+    	                }
+    			    }); 
+        		}
+           });
+            
+            //학부에 따른 학과 목록을 보여주고 강의목록을 출력합니다
+            $(document).on('click','#major li',function(){
+            	console.log('학과클릭');
+            	selectedMajor = ($(this).text());
+        		$('#dropdownMenu2').html(selectedMajor);
+        		$.ajax({
+	             	url : "/searchSubjectByType",
+	                dataType : "json",
+	                type : "post",
+	                data : {selectedMajor : selectedMajor},
+	                success: function(data) {
+	                	$('#searchResult').html('');
+	                	for(var i=0; i<data.length; i++){
+							console.log(i);
+							for(var j=0; j<data[i].time.length; j++){
+								if(data[i].time[j].substring(0,1) == 'M'){
+									data[i].time[j] = '월'+data[i].time[j].substring(1,2);
+								}else if(data[i].time[j].substring(0,1) == 'T'){
+									data[i].time[j] = '화'+data[i].time[j].substring(1,2);
+								}else if(data[i].time[j].substring(0,1) == 'W'){
+									data[i].time[j] = '수'+data[i].time[j].substring(1,2);
+								}else if(data[i].time[j].substring(0,1) == 'TH'){
+									data[i].time[j] = '목'+data[i].time[j].substring(1,2);
+								}else if(data[i].time[j].substring(0,1) == 'F'){
+									data[i].time[j] = '금'+data[i].time[j].substring(1,2);
+								} 
+							}
+							
+							$('#searchResult').append('<tr><td class="nameClass" id="subjectName'+i+'"><div class="idClass" style="display: none;">'+data[i].id
+							+'</div><div class="codeClass" style="display: none;">'+data[i].code+'</div>'+data[i].name+'</td>'
+							+'<td>'+data[i].noPerWeek+'</td><td>'+data[i].credit+'</td><td>'+data[i].group+'</td><td>'+data[i].classroom+'</td><td>'+data[i].professor
+							+'</td><td><div class="subjectTime">'+data[i].time+'</div></td><td>'+data[i].type+'</td></tr>');
+					   }
+	                  
+	                 },
+	                error:function(){
+	                    alert("error");
+	                }
+			    }); 
+            });
+            
+            //검색어에 따른 강의목록을 출력합니다
+            $('#searchBtn').click(function(){
+            	console.log('클릭');
+            	//검색어를 변수에 담습니다
+            	var key = $('#inputSuccess').val();
+            	$.ajax({
+	             	url : "/searchSubjectByName",
+	                dataType : "json",
+	                type : "post",
+	                data : {name : key},
+	                success: function(data) {
+	                	$('#searchResult').html('');
+						for(var i=0; i<data.length; i++){
+							console.log(i);
+							for(var j=0; j<data[i].time.length; j++){
+								if(data[i].time[j].substring(0,1) == 'M'){
+									data[i].time[j] = '월'+data[i].time[j].substring(1,2);
+								}else if(data[i].time[j].substring(0,1) == 'T'){
+									data[i].time[j] = '화'+data[i].time[j].substring(1,2);
+								}else if(data[i].time[j].substring(0,1) == 'W'){
+									data[i].time[j] = '수'+data[i].time[j].substring(1,2);
+								}else if(data[i].time[j].substring(0,1) == 'TH'){
+									data[i].time[j] = '목'+data[i].time[j].substring(1,2);
+								}else if(data[i].time[j].substring(0,1) == 'F'){
+									data[i].time[j] = '금'+data[i].time[j].substring(1,2);
+								} 
+							}
+							
+							$('#searchResult').append('<tr><td class="nameClass" id="subjectName'+i+'"><div class="idClass" style="display: none;">'+data[i].id
+							+'</div><div class="codeClass" style="display: none;">'+data[i].code+'</div>'+data[i].name+'</td>'
+							+'<td>'+data[i].noPerWeek+'</td><td>'+data[i].credit+'</td><td>'+data[i].group+'</td><td>'+data[i].classroom+'</td><td>'+data[i].professor
+							+'</td><td><div class="subjectTime">'+data[i].time+'</div></td><td>'+data[i].type+'</td></tr>');
+					   }
+	                },
+	                error:function(){
+	                    alert("error");
+	                }
+			    }); 
+            });
+        });
+      </script>  
 		<!-- 개설강좌 리스트/검색결과 -->
 		<div class="list" style="width: 700px;">
-			<table>
+			<table class="table table-bordered lectureList">
 				<thead>
 					<tr>
-						<th>과목명</th>
-						<th>주당수업횟수</th>
-						<th>학점</th>
-						<th>분반</th>
-						<th>강의실</th>
-						<th>담당교수</th>
-						<th>시간</th>
-						<th>이수구분</th>
-						<th>상세구분</th>
+						<th class="info">과목명</th>
+						<th class="info">주당수업횟수</th>
+						<th class="info">학점</th>
+						<th class="info">분반</th>
+						<th class="info">강의실</th>
+						<th class="info">담당교수</th>
+						<th class="info">시간</th>
+						<th class="info">구분</th>
 					</tr>
 				</thead>
-				<tbody>
-					#foreach($list in $subject)
-					<tr>	
-						<td class="codeClass" id="subjectCode$velocityCount" style="display:none;">$list.getCode()</td>
-						<td class="nameClass" id="subjectName$velocityCount"><div class="codeClass" style="display: none;">$list.getCode()</div>$list.getName()</td>
-						<td>$list.getNoPerWeek()</td>
-						<td>$list.getCredit()</td>
-						<td>$list.getGroup()</td>
-						<td>$list.getClassroom()</td>
-						<td>$list.getProfessor()</td>
-						<td>
-						#foreach($time in $list.getTime())
-							<div class="subjectTime">$time</div>
-						#end
-						</td>
-						<td>$list.getType()</td>
-						<td>$list.getTypeDetail()</td> 
-					</tr>
-					#end
+				<tbody class="table-hover" id="searchResult">
 				</tbody>
 			</table>
 		</div>
-		
-		
-		
-		
-		
-			
-	<script>
-        $(document).ready(function(){
-          $('#college').on('change', function(){
-            alert(this.value);
-            var selectedCollege = this.value;
-            
-            $.ajax({
-              url : "/searchDepartments",
-              dataType : "json",
-              type : "post",
-              data : {selectedCollege : selectedCollege},
-              success: function(data) {
-                  alert("성공 :"+data);
-              },
-              error:function(){
-                  alert("erro");
-              }
-			}); 
-        });
-        
-        });
-        
-      </script>  
-      
-      <select id="college">
-        <option>::선택::</option>
-        <option value="공과대학">공과대학</option>
-        <option value="자연과학대학">자연과학대학</option>
-        <option value="인문사회과학대학">인문사회과학대학</option>
-        <option value="경영대학">경영대학</option>
-        <option value="환경·해양대학">환경·해양대학</option>
-        <option value="수산과학대학">수산과학대학</option>
-      </select>
-
-      <select>
-        <option>국제지역학부</option>
-        <option>경영학부</option>
-        <option>전자공학과</option>
-        <option>해양학과</option>
-        <option>정보통신공학과</option>
-        <option>조선해양시스템공학과</option>
-        <option>지구환경과학과</option>
-        <option>공간정보시스템공학과</option>
-        <option>환경공학과</option>
-        <option>제어계측공학과</option>
-        <option>IT융합응용공학과</option>
-        <option>의공학과</option>
-        <option>국어국문학과</option>
-        <option>정치외교학과</option>
-        <option>유아교육과</option>
-        <option>신문방송학과</option>
-        <option>사학과</option>
-        <option>경제학부</option>
-        <option>시스템경영공학부</option>
-        <option>에너지자원공학과</option>
-        <option>전기공학과</option>
-        <option>컴퓨터공학과</option>
-        <option>건축학과</option>
-        <option>건축공학과</option>
-        <option>토목공학과</option>
-        <option>기계공학과</option>
-        <option>안전공학과</option>
-        <option>금속공학과</option>
-        <option>소방공학과</option>
-        <option>재료공학과</option>
-        <option>신소재시스템공학과</option>
-        <option>국어국문학과</option>
-        <option>영어영문학과</option>
-        <option>일어일문학부</option>
-        <option>생태공학과</option>
-        <option>행정학과</option>
-        <option>법학과</option>
-        <option>신문방송학과/option>
-        </option>
-        <option>정치외교학과</option>
-        <option>시각디자인학과</option>
-        <option>공업디자인학과</option>
-        <option>패션디자인학과</option>
-        <option>응용수학과</option>
-        <option>통계학과</option>
-        <option>물리학과</option>
-        <option>화학과</option>
-        <option>미생물학과</option>
-        <option>국제통상학부</option>
-      </select>
-    </div>
-  </body>
-</body>
-
+	</body>
 </html>

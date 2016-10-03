@@ -24,30 +24,53 @@ public class SubjectController {
 	@RequestMapping("/timetable")
 	public ModelAndView index(ModelAndView mav){
 
-		List<Subject> subList = subjectService.getAll();
-		//System.out.println(subList.size());
-		
-		mav.addObject("subject", subList);
 		mav.setViewName("/index");
 		
 		return mav;
 	}
 	
-	@RequestMapping("/addSubject")
-	public List<Subject> addSubject(String code){
+	@RequestMapping("/findSubjectByCode")
+	public List<Subject> findSubjectByCode(String code){
 		System.out.println("code: "+code);
 		List<Subject> subjectList = subjectService.findListByCode(code);
 		System.out.println("subjectList: "+subjectList);
 		return subjectList;
 	}
 	
+	@RequestMapping("/findSubjectById")
+	public List<Subject> findSubjectById(String id){
+		System.out.println("id: "+id);
+		List<Subject> subjectList = subjectService.findListById(id);
+		System.out.println("subjectList: "+subjectList);
+		return subjectList;
+	}
+	
 	@RequestMapping("/searchDepartments")
 	public Departments searchDepartments(String selectedCollege){
-		System.out.println("searchDepartments Controller 성공");
-		System.out.println(selectedCollege);
+	//	System.out.println("searchDepartments Controller 성공");
+	//	System.out.println(selectedCollege);
 		
 		Departments departments= departmentsService.getDepartments(selectedCollege);
-		System.out.println("departments ::"+departments);
+	//	System.out.println("departments ::"+departments);
 		return departments;
+	}
+	
+	@RequestMapping("/searchSubjectByType")
+	public List<Subject> searchSubjectByType(String selectedMajor){
+		System.out.println("selectedMajor: "+selectedMajor);
+		
+		List<Subject> subjectList = subjectService.findListByType(selectedMajor);
+		System.out.println(subjectList);
+		return subjectList;
+	}
+	
+	@RequestMapping("/searchSubjectByName")
+	public List<Subject> searchSubjectByName(String name){
+		System.out.println("searchSubjectByName 실행");
+		System.out.println("Name: "+name);
+		
+		List<Subject> subjectList = subjectService.findListByName(name);
+		System.out.println(subjectList);
+		return subjectList;
 	}
 }

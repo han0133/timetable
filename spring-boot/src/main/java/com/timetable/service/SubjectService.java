@@ -18,7 +18,19 @@ public class SubjectService {
 		return repository.findByCode(code);
 	}
 	
+	public List<Subject> findListById(String id){
+		return repository.findById(id);
+	}
+	
 	public List<Subject> getAll(){
 		return repository.findAll();
+	}
+	
+	public List<Subject> findListByType(String type){
+		return repository.findByType(type);
+	}
+	
+	public List<Subject> findListByName(String name){
+		return repository.findBySubName(name);
 	}
 }
